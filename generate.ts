@@ -2,16 +2,23 @@
 
 import { aliases } from "./aliases.ts";
 
+const getWraps = (body: string) =>
+  body.includes("$argv") ? body.split("$argv")[0].trim() : body;
+
+const getSignature = (name: string, body: string) =>
+  `function ${name} --wraps="${getWraps(
+    body,
+  )}" --description "alias ${name} ${body}"`;
+
+const getBody = (body: string) =>
+  `\t${body}${body.includes("$argv") ? "" : " $argv"}`;
+
 const main = async () => {
   // take each key and value from aliases, and make a new array of strings that will be written to a file to write a fish function, with the key as the function name and the value as the function body
   const fishFunctions = Object.fromEntries(
-    Object.entries(aliases).map(([key, value]) => [
-      key,
-      [
-        `function ${key} --wraps="${value}" --description="alias ${key} ${value}"`,
-        `\t${value}${value.includes("$argv") ? "" : " $argv"}`,
-        "end",
-      ].join("\n"),
+    Object.entries(aliases).map(([name, body]) => [
+      name,
+      [getSignature(name, body), getBody(body), "end"].join("\n"),
     ]),
   );
 
